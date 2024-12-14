@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import cors from 'cors'
 import { argv } from 'process';
 
-// Hash a string into a numeric ID in [0, 2^m-1].
+// Hash a string into a numeric ID in [0, 2^m-1]. This is used for consistent hashing.
 function hashToID(str: string, m: number): bigint {
     const hash = crypto.createHash('sha1').update(str).digest();
     const bitsNeeded = m;
@@ -17,6 +17,7 @@ function hashToID(str: string, m: number): bigint {
         id = (id << BigInt(8)) + BigInt(sliced[i]);
     }
 
+    // Remove any excess bits to fit within m bits
     const excessBits = (bytesNeeded * 8) - bitsNeeded;
     if (excessBits > 0) {
         id = id >> BigInt(excessBits);
@@ -38,13 +39,13 @@ interface NodeEntry {
     id: bigint;
     url: string;
 }
-
+// Class representing a single node in the Chord ring
 class Node {
     id: bigint;
     url: string;
     kvStore: Map<bigint, { originalKey: string, value: string }>;
     m: number;
-    ringSize: bigint;
+    ringSize: bigint; //Size of the circular ring (2^m)
     fingerTable: (NodeEntry | null)[];
     predecessor: NodeEntry | null;
     successor: NodeEntry;
@@ -62,6 +63,7 @@ class Node {
         this.kvStore = new Map();
     }
 
+    // Find the successor node responsible for a given key
     async findSuccessor(keyStr: string): Promise<NodeEntry> {
         const key = hashToID(keyStr, this.m);
         let currentNode: Node = this;
@@ -72,7 +74,7 @@ class Node {
         }
         return currentNode.successor;
     }
-
+    // Find the predecessor node for a given key
     async findPredecessor(keyStr: string): Promise<Node> {
         const key = hashToID(keyStr, this.m);
         let currentNode: Node = this;
@@ -94,6 +96,7 @@ class Node {
         return { id: this.id, url: this.url };
     }
 
+    // Join an existing Chord ring or form a new ring if none exists
     async join(existingNodeUrl: string | null) {
         if (existingNodeUrl !== null) {
             const succ = await (await fetchNodeInfo(existingNodeUrl, this)).findSuccessor(this.url);
@@ -105,7 +108,7 @@ class Node {
         }
         this.fingerTable[0] = this.successor;
     }
-
+    // Periodic function to stabilize the node's successor pointer and notify the successor
     async stabilize() {
         if (this.successor.id === this.id && this.predecessor === null) return;
         const successorNode = await fetchNodeInfo(this.successor.url, this);
@@ -115,13 +118,13 @@ class Node {
         }
         await axios.post(`${this.successor.url}/notify`, { id: this.id.toString(), url: this.url, });
     }
-
+    // Notify this node of a possible new predecessor
     notify(node: NodeEntry) {
         if (this.predecessor === null || inInterval(hashToID(node.url, this.m), hashToID(this.predecessor.url, this.m), this.id, this.ringSize)) {
             this.predecessor = node;
         }
     }
-
+    // Fix a random finger table entry
     async fixFingers() {
         const randomIndex = Math.floor(Math.random() * this.fingerTable.length);
         const start = (this.id + (BigInt(1) << BigInt(randomIndex))) % this.ringSize;
@@ -129,7 +132,7 @@ class Node {
         const successor = await this.findSuccessor(startKeyStr);
         this.fingerTable[randomIndex] = successor;
     }
-
+    // Placeholder for checking if the predecessor is still active
     async checkPredecessor() {
         // Placeholder for real checks
     }
