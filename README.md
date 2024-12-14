@@ -34,8 +34,8 @@ chmod +x start_nodes.sh stop_nodes.sh
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/chord-dht-visualization.git
-cd chord-dht-visualization
+git clone https://github.com/qwazzarr/chord.git
+cd chord
 ```
 
 ### 2. Install Backend Dependencies
@@ -43,7 +43,6 @@ cd chord-dht-visualization
 Navigate to the backend directory and install dependencies:
 
 ```bash
-cd backend
 npm install
 ```
 
@@ -52,7 +51,7 @@ npm install
 Navigate to the frontend directory and install dependencies:
 
 ```bash
-cd ../frontend
+cd cd chord-ui
 npm install
 ```
 
@@ -89,7 +88,7 @@ The frontend visualizes the Chord DHT ring.
 1. Navigate to the frontend directory:
 
    ```bash
-   cd ../frontend
+   cd chord-ui
    ```
 
 2. Start the frontend using Vite:
@@ -148,7 +147,7 @@ Launches multiple backend nodes using `node server.js` with unique ports.
 ```bash
 #!/bin/bash
 for i in {3000..3009}; do
-  PORT=$i node server.js --port=$i --dummy=Node$i --m=5 --stabilize-interval=1000 &
+  PORT=$i node server.js --port=$i --m=5 --stabilize-interval=1000 &
 done
 ```
 
@@ -181,7 +180,7 @@ The backend is written in **TypeScript** and uses **Express.js**.
   ```
 - Run a single backend node:
   ```bash
-  node dist/server.js --port=3000 --dummy=Node1 --m=5 --stabilize-interval=1000
+  node dist/server.js --port=3000 --m=5 --stabilize-interval=1000
   ```
 
 ### **Frontend**
@@ -193,28 +192,6 @@ The frontend is written in **React.js** using **Vite** for development.
 ```bash
 npm run dev
 ```
-
----
-
-## **Project Structure**
-
-```plaintext
-chord-dht-visualization/
-├── backend/
-│   ├── server.ts          # Backend Chord implementation
-│   ├── tsconfig.json      # TypeScript configuration
-│   ├── start_nodes.sh     # Script to start nodes
-│   ├── stop_nodes.sh      # Script to stop nodes
-│   └── package.json       # Backend dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx        # React app
-│   │   └── index.tsx      # Entry point
-│   ├── vite.config.ts     # Vite configuration
-│   └── package.json       # Frontend dependencies
-└── README.md              # Project documentation
-```
-
 ---
 
 ## **Troubleshooting**
